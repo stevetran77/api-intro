@@ -132,23 +132,6 @@ services:
       airflow-init:
         condition: service_completed_successfully
 
-  airflow-webserver:
-    image: apache/airflow:2.9.2
-    depends_on: [postgres, airflow-scheduler]
-    env_file: ./.env
-    environment:
-      - AIRFLOW__CORE__LOAD_EXAMPLES=False
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/logs:/opt/airflow/logs
-      - ./airflow/plugins:/opt/airflow/plugins
-    command: webserver
-    
-
   airflow-scheduler:
     <<: *airflow-common
     command: scheduler
