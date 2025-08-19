@@ -2,6 +2,7 @@ from airflow.sdk import dag, task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.sdk.bases.sensor import PokeReturnValue
 
+
 @dag
 def user_processing():
     
@@ -31,8 +32,18 @@ def user_processing():
             condition = False
             fake_user = None
         return PokeReturnValue(is_done=condition, xcom_value=fake_user)
-    is_api_available()
     
+    def extract_user(fake_user):
+        return {
+            'id' : fake_user['id'],
+            'firstName' : fake_user['personalInfo']['firstName'],
+            'lastName': fake_user['personalInfo']['lastName'],
+            'email': fake_user['personalInfo']['email'],
+        }
+    
+    fake_user = is_api_available()
+    user_info = extract_user(fake_user)
+
 user_processing()
 
 
