@@ -2,7 +2,7 @@ from airflow.sdk import dag, task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.sdk.bases.sensor import PokeReturnValue
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-
+    
 @dag
 def user_processing():
     
@@ -36,35 +36,33 @@ def user_processing():
     @task
     def extract_user(fake_user):
         return {
-            'id' : fake_user['id'],
-            'firstName' : fake_user['personalInfo']['firstName'],
-            'lastName': fake_user['personalInfo']['lastName'],
-            'email': fake_user['personalInfo']['email'],
+            "id": fake_user["id"],
+            "firstname": fake_user["personalInfo"]["firstName"],
+            "lastname": fake_user["personalInfo"]["lastName"],
+            "email": fake_user["personalInfo"]["email"],
         }
+        
     @task
     def process_user(user_info):
         import csv
         from datetime import datetime
-        user_info = {
-                'id' : '1234',
-                'firstName' : 'John',
-                'lastName': 'Doe',
-                'email': 'john123@gmail.com',
-            }
-        user_info['created_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        with open('/tmp/user_info.csv','w', newline="") as f:
+        user_info["created_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open("/tmp/user_info.csv", "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=user_info.keys())
             writer.writeheader()
             writer.writerow(user_info)
+            
     @task
     def store_user():
         hook = PostgresHook(postgres_conn_id="postgres")
+        # 1. Xoá dữ liệu cũ
+        hook.run("TRUNCATE TABLE users;")
+        # 2. Load lại dữ liệu mới
         hook.copy_expert(
-            sql="COPY users FROM STDIN WITH CSV HEADER",
-            filename="/tmp/user_info.csv"
-        )
-    create_table >> process_user(extract_user(is_api_available())) >> store_user()     
+            sql="COPY users (id, firstname, lastname, email, created_at) FROM STDIN WITH CSV HEADER",
+            filename="/tmp/user_info.csv",
+    )
 
+    process_user(extract_user(create_table >> is_api_available())) >> store_user()
+            
 user_processing()
-
-
