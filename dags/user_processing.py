@@ -51,13 +51,13 @@ def user_processing():
                 'lastName': 'Doe',
                 'email': 'john123@gmail.com',
             }
-        # user_info['created_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        user_info['created_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         with open('/tmp/user_info.csv','w', newline="") as f:
             writer = csv.DictWriter(f, fieldnames=user_info.keys())
             writer.writeheader()
             writer.writerow(user_info)
     @task
-    def store_user(user_info):
+    def store_user():
         hook = PostgresHook(postgres_conn_id="postgres")
         hook.copy_expert(
             sql="COPY users FROM STDIN WITH CSV HEADER",
@@ -66,7 +66,7 @@ def user_processing():
     fake_user = is_api_available()
     user_info = extract_user(fake_user)
     process_user(user_info)
-    # store_user()
+    store_user()
 
 user_processing()
 
